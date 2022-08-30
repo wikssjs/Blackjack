@@ -7,6 +7,7 @@
     android:background="@drawable/black_back"
     tools:context=".gameActivity">
 
+
     <LinearLayout
         android:id="@+id/linearLayout3"
         android:layout_width="0dp"
