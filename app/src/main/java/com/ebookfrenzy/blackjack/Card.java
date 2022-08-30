@@ -10,6 +10,7 @@ public class Card {
     private String suit;
     private int image;
 
+
     public Card(int value, String suit, int image) {
         this.value = value;
         this.suit = suit;

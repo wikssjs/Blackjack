@@ -78,6 +78,7 @@ public class CardPackage {
         if(deck.size()==0){
             addAllCards();
             Shuflle();
+
         }
         for (int i = 0; i < 2; i++) {
             Card card = deck.get((0));

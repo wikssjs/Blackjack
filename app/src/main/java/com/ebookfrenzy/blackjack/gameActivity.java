@@ -172,6 +172,7 @@ public class gameActivity extends AppCompatActivity {
 
     public void distributeCards() {
         CardPackage.getFourCards();
+
         dealerCard1.setImageResource(CardPackage.dealerHand.get(dealerIndex).getImage());
         dealerIndex++;
         dealerCard2.setImageResource(R.drawable.back);
