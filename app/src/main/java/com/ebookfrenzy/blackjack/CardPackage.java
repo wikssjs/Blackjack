@@ -10,6 +10,8 @@ public class CardPackage {
     public static ArrayList<Card> deck = new ArrayList<Card>();
     public static ArrayList<Card> playerHand = new ArrayList<Card>();
     public static ArrayList<Card> dealerHand = new ArrayList<Card>();
+    public static ArrayList<Card> deletedCards = new ArrayList<Card>();
+
     public static void addAllCards() {
         deck.add(new Card(1, "spades", R.drawable.ace_of_spades));
         deck.add(new Card(2, "spades", R.drawable.two_of_spades));
@@ -63,6 +65,8 @@ public class CardPackage {
         deck.add(new Card(10, "clubs", R.drawable.jack_of_clubs));
         deck.add(new Card(10, "clubs", R.drawable.queen_of_clubs));
         deck.add(new Card(10, "clubs", R.drawable.king_of_clubs));
+        deck.add(new Card(0, "joker", R.drawable.red_joker));
+        deck.add(new Card(0, "joker", R.drawable.black_joker));
         }
 
     public static Card getCard() {
@@ -75,23 +79,53 @@ public class CardPackage {
 
 
     public static void getFourCards() {
-        if(deck.size()==0){
+        if (deck.size() == 0) {
             addAllCards();
             Shuflle();
-
         }
+
+        boolean pass = true;
+        do {
+            for (Card card : deck) {
+                if (card.getValue() == 0 && deck.indexOf(card) < 10||deck.indexOf(card)<deck.size()-10) {
+                    Shuflle();
+                }
+                else {
+                    pass=false;
+                }
+            }
+        } while (pass);
+
         for (int i = 0; i < 2; i++) {
-            Card card = deck.get((0));
-            playerHand.add(card);
-            deck.remove(0);
-            card = deck.get((0));
-            dealerHand.add(card);
-            deck.remove(0);
+            Card card;
+            do {
+             card= deck.get(0);
+
+                if (card.getValue() > 0) {
+                    playerHand.add(card);
+                }
+                    deck.remove(0);
+                deck.addAll(deletedCards);
+                Shuflle();
+                deletedCards.clear();
+            }while (card.getSuit().equals("joker"));
+             do {
+                card = deck.get((0));
+
+                 if (card.getValue() > 0) {
+                     dealerHand.add(card);
+                 }
+                     deck.remove(0);
+                    deck.addAll(deletedCards);
+                    Shuflle();
+                    deletedCards.clear();
+             }while (card.getSuit().equals("joker"));
         }
     }
     public static void Shuflle() {
         Collections.shuffle(deck);
     }
+
     public static int sumPlayerHand() {
         int sum = 0;
         for (int i = 0; i < playerHand.size(); i++) {
