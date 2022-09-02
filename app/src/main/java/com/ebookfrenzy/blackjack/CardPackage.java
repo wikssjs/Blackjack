@@ -70,11 +70,13 @@ public class CardPackage {
         }
 
     public static Card getCard() {
-    Card card = deck.get((0));
-    playerHand.add(card);
-    deck.remove(0);
-    return card;
-
+        Card card = deck.get((0));
+        if (!card.getSuit().equals("joker")) {
+            playerHand.add(card);
+            deck.remove(0);
+        }
+        card=deck.get((1));
+            return card;
     }
 
 
