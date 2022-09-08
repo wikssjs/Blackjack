@@ -46,12 +46,19 @@ public class gameActivity extends AppCompatActivity {
     private int playerIndex=0;
     private final Handler handler = new Handler();
     private static final String FILENAME = "money.txt";
+    public static TextView level ;
 
 
+    /***
+     * This method is called when the activity is created.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+money = 50000;
+        new CardPackage(this);
+         level = findViewById(R.id.levelId);
 
         playingLayout = findViewById(R.id.playingButton_layout);
         bettingLayout = findViewById(R.id.chipLayout);
@@ -90,6 +97,7 @@ public class gameActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 restart();
+                level.setText(CardPackage.deck.size()+"");
             }
             else{
                 Toast.makeText(gameActivity.this, "You have no money or bet", Toast.LENGTH_SHORT).show();
@@ -135,58 +143,60 @@ public class gameActivity extends AppCompatActivity {
 
 
 
+    /***
+     * This method is called when the user clicks on a chip.
+     * @param v
+     */
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.chi_oneId:
                 if (money >= 1) {
                     money -= 1;
                     betToInt += 1;
-                    betAmount.setText(String.valueOf(betToInt));
-                    moneyAmount.setText(String.valueOf(money));
                 }
                 break;
             case R.id.chip_fiveId:
                 if (money >= 5) {
                     money -= 5;
                     betToInt += 5;
-                    betAmount.setText(String.valueOf(betToInt));
-                    moneyAmount.setText(String.valueOf(money));
                 }
                 break;
             case R.id.chip_twentyFiveId:
                 if (money >= 25) {
                     money -= 25;
                     betToInt += 25;
-                    betAmount.setText(String.valueOf(betToInt));
-                    moneyAmount.setText(String.valueOf(money));
                 }
                 break;
             case R.id.chip_fifthyId:
                 if (money >= 50) {
                     money -= 50;
                     betToInt += 50;
-                    betAmount.setText(String.valueOf(betToInt));
-                    moneyAmount.setText(String.valueOf(money));
                 }
                 break;
             case R.id.chip_hundredId:
                 if (money >= 100) {
                     money -= 100;
                     betToInt += 100;
-                    betAmount.setText(String.valueOf(betToInt));
-                    moneyAmount.setText(String.valueOf(money));
                 }
                 break;
             default:
                 betAmount.setText("insufficient money");
                 break;
         }
+                    betAmount.setText(String.valueOf(betToInt));
+                    moneyAmount.setText(String.valueOf(money));
     }
 
+    /***
+     * This method is called when the user clicks on the bet button.
+     */
     public void startGame() {
         distributeCards();
     }
 
+    /***
+     * This method is used to distribute the cards to the player and dealer
+     */
     public void distributeCards() {
         CardPackage.getFourCards();
         doubleDown.setVisibility(View.VISIBLE);
@@ -198,42 +208,78 @@ public class gameActivity extends AppCompatActivity {
         playerCard2.setImageResource(CardPackage.playerHand.get(playerIndex).getImage());
         playerIndex++;
         dealerIndex++;
-        playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+        if(playerhasAce()&&CardPackage.sumPlayerHand()+10<=21){
+            playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand())+
+                            "/"+String.valueOf(CardPackage.sumPlayerHand()+10));
+        }
+        else{
+            playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+        }
+
         dealerCardValue.setText(String.valueOf(CardPackage.sumDealerHand()-CardPackage.dealerHand.get(dealerIndex-1).getValue()));
+        if(playerHasBlackJack()){
+            Toast.makeText(this, "BLACKJACK", Toast.LENGTH_SHORT).show();
+            playerCardValue.setText("BLACKJACK");
+            dealerCard2.setImageResource(CardPackage.dealerHand.get(dealerIndex-1).getImage());
+            money+= betToInt*2.5;
+            moneyAmount.setText(String.valueOf(money));
+            betAmount.setText("0");
+            betToInt = 0;
+            clearCards();
+            gameEnd();
+        }
+        resetAceValue();
     }
+    /***
+     * This method is used to hit the card to the player
+     */
     public  void hitCard() {
         doubleDown.setVisibility(View.GONE);
         ImageView newCard = new ImageView(this);
-        CardPackage.getCard();
+        Card card = CardPackage.getCard();
         newCard.setImageResource(CardPackage.playerHand.get(CardPackage.playerHand.size()-1).getImage());
         newCard.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT,1));
         newCard.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
         playerLayout.addView(newCard);
-        playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+        if(playerhasAce()&&CardPackage.sumPlayerHand()+10<=21) {
+            playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand())+
+                                    "/"+String.valueOf(CardPackage.sumPlayerHand()+10));
+        }
+        else {
+            playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+        }
         if(CardPackage.isBust()) {
             playerCardValue.setText("BUST");
-            bustEvent();
+            gameEnd();
             clearCards();
             betToInt = 0;
             betAmount.setText(String.valueOf(betToInt));
-            bettingLayout.setVisibility(View.VISIBLE);
         }
     }
 
-    public void bustEvent() {
-        Toast.makeText(this, "BUST", Toast.LENGTH_SHORT).show();
+    /***
+     * bust event
+     */
+    public void gameEnd() {
         playingLayout.setVisibility(View.GONE);
         bettingLayout.setVisibility(View.VISIBLE);
         replayButton.setVisibility(View.VISIBLE);
     }
 
+
+    /***
+     * This method is used to clear the cards from the player and dealer
+     */
     public void clearCards(){
         CardPackage.deletedCards.addAll(CardPackage.playerHand);
         CardPackage.playerHand.clear();
         CardPackage.deletedCards.addAll(CardPackage.dealerHand);
         CardPackage.dealerHand.clear();
     }
+    /***
+     * This method is used to restart the game
+     */
     public void restart(){
         playingLayout.setVisibility(View.VISIBLE);
         replayButton.setVisibility(View.GONE);
@@ -255,8 +301,11 @@ public class gameActivity extends AppCompatActivity {
 
     }
 
+
+    /***
+     * This method is stand the player hand
+     */
     public void stand(){
-        if(!CardPackage.isBust()) {
             while (CardPackage.sumDealerHand() < 17) {
                 dealerCard2.setImageResource(CardPackage.dealerHand.get(CardPackage.dealerHand.size() - 1).getImage());
                 CardPackage.addCardDealer();
@@ -269,9 +318,18 @@ public class gameActivity extends AppCompatActivity {
                 newCard.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
                 handler.postDelayed(() -> dealerLayout.addView(newCard), 100);
             }
-        }
-        if(CardPackage.sumDealerHand()>17){
-            dealerCard2.setImageResource(CardPackage.dealerHand.get(1).getImage());
+
+
+        for (Card card:CardPackage.playerHand) {
+            if(card.getValue()==1){
+                if(CardPackage.sumPlayerHand()+10<=21){
+                    card.setValue(11);
+                    playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+                }
+                else{
+                    playerCardValue.setText(String.valueOf(CardPackage.sumPlayerHand()));
+                }
+            }
         }
         if(CardPackage.sumDealerHand() > 21){
             dealerCardValue.setText("BUST :"+String.valueOf(CardPackage.sumDealerHand()));
@@ -284,14 +342,12 @@ public class gameActivity extends AppCompatActivity {
         else if(CardPackage.sumDealerHand() > CardPackage.sumPlayerHand()&& CardPackage.sumDealerHand()<=21){
             Toast.makeText(this, "DEALER WINS", Toast.LENGTH_SHORT).show();
             dealerCardValue.setText("WINS: "+String.valueOf(CardPackage.sumDealerHand()));
-            dealerCard2.setImageResource(CardPackage.dealerHand.get(1).getImage());
 
         }
         else if(CardPackage.sumDealerHand() == CardPackage.sumPlayerHand()){
             Toast.makeText(this, "DRAW", Toast.LENGTH_SHORT).show();
             dealerCardValue.setText("DRAW :"+String.valueOf(CardPackage.sumDealerHand()));
             playerCardValue.setText("DRAW :"+String.valueOf(CardPackage.sumPlayerHand()));
-            dealerCard2.setImageResource(CardPackage.dealerHand.get(1).getImage());
             money+= betToInt;
         }
         else if(CardPackage.sumDealerHand() < CardPackage.sumPlayerHand()&& CardPackage.sumPlayerHand()<=21){
@@ -299,15 +355,16 @@ public class gameActivity extends AppCompatActivity {
             playerCardValue.setText("WINS : "+String.valueOf(CardPackage.sumPlayerHand()));
             money+= betToInt*2;
         }
-
         dealerCard2.setImageResource(CardPackage.dealerHand.get(1).getImage());
         clearCards();
-        bustEvent();
+        gameEnd();
         moneyAmount.setText(String.valueOf(money));
         betAmount.setText("0");
         betToInt = 0;
-
     }
+    /***
+     * This method is used to double the bet amount
+     */
    public void doubleDown(){
          if(money >= betToInt){
              money-= betToInt;
@@ -331,14 +388,21 @@ public class gameActivity extends AppCompatActivity {
          else{
               Toast.makeText(this, "insufficient money", Toast.LENGTH_SHORT).show();
          }
+
    }
 
-   public void saveMoneyToFile() throws IOException {
+   /**
+    * This method is to save the player's money
+    */
+   public void  saveMoneyToFile() throws IOException {
         FileOutputStream outputStream=null;
         outputStream = openFileOutput(FILENAME, Context.MODE_PRIVATE);
         outputStream.write(String.valueOf(money).getBytes());
         outputStream.close();
    }
+    /**
+     * This method is to load the player's money
+     */
    public void getMoneyFromFile(){
         FileInputStream inputStream=null;
         try {
@@ -360,6 +424,10 @@ public class gameActivity extends AppCompatActivity {
    }
     boolean doubleBackToExitPressedOnce = false;
 
+
+    /***
+     * This method is used to exit the game
+     */
     @Override
     public void onBackPressed() {
         if (doubleBackToExitPressedOnce) {
@@ -384,7 +452,25 @@ public class gameActivity extends AppCompatActivity {
             }
         }, 2000);
     }
-
+    public boolean playerHasBlackJack(){
+       return CardPackage.playerHand.get(0).getValue()==1&&CardPackage.playerHand.get(1).getValue()==10||
+               CardPackage.playerHand.get(0).getValue()==10&&CardPackage.playerHand.get(1).getValue()==1;
+    }
+    public boolean playerhasAce() {
+        for (Card card : CardPackage.playerHand) {
+            if (card.getValue() == 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public void resetAceValue(){
+        for (Card card:CardPackage.playerHand) {
+            if(card.getValue()==11){
+                card.setValue(1);
+            }
+        }
+    }
     //TODO: Progress bar for the game level
     //TODO: Add sound effects for the game
             //TODO: Add animations for the game

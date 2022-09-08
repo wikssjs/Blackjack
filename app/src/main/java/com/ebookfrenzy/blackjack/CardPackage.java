@@ -1,17 +1,29 @@
 package com.ebookfrenzy.blackjack;
 
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 public class CardPackage {
 
-    public static ArrayList<Card> deck = new ArrayList<Card>();
-    public static ArrayList<Card> playerHand = new ArrayList<Card>();
-    public static ArrayList<Card> dealerHand = new ArrayList<Card>();
-    public static ArrayList<Card> deletedCards = new ArrayList<Card>();
+    public static ArrayList<Card> deck = new ArrayList<>();
+    public static ArrayList<Card> playerHand = new ArrayList<>();
+    public static ArrayList<Card> dealerHand = new ArrayList<>();
+    public static ArrayList<Card> deletedCards = new ArrayList<>();
+    public static HashMap<Integer, Integer> aceValues = new HashMap<>();
+    private  Context context;
 
+    public CardPackage(Context context) {
+        this.context = context;
+    }
+
+    /***
+     * This method is used to add all the cards to the deck.
+     */
     public static void addAllCards() {
         deck.add(new Card(1, "spades", R.drawable.ace_of_spades));
         deck.add(new Card(2, "spades", R.drawable.two_of_spades));
@@ -69,17 +81,30 @@ public class CardPackage {
         deck.add(new Card(0, "joker", R.drawable.black_joker));
         }
 
+
+    /***
+     *  This method is used to get the first card in the deck.
+     */
     public static Card getCard() {
+
         Card card = deck.get((0));
         if (!card.getSuit().equals("joker")) {
             playerHand.add(card);
             deck.remove(0);
-        }
-        card=deck.get((1));
-            return card;
+        } else {
+            deck.addAll(deletedCards);
+            deletedCards.clear();
+            Shuflle();
+            card = deck.get((0));
+            playerHand.add(card);
+    }
+        return card;
     }
 
 
+    /***
+     * This method is used to get four cards from the deck.
+     */
     public static void getFourCards() {
         if (deck.size() == 0) {
             addAllCards();
@@ -87,15 +112,20 @@ public class CardPackage {
         }
 
         boolean pass = true;
+        int test = 0;
         do {
             for (Card card : deck) {
-                if (card.getValue() == 0 && deck.indexOf(card) < 10||deck.indexOf(card)<deck.size()-10) {
+                if (deck.size()==54&&card.getValue() == 0 && deck.indexOf(card) < 10&&card.getImage()==R.drawable.black_joker||deck.indexOf(card)>deck.size()-10&&card.getImage()==R.drawable.red_joker) {
                     Shuflle();
+                    Log.i("caca", "Shuffle");
                 }
+
                 else {
                     pass=false;
+                    Log.i("caca", "not Shuffling"+test);
                 }
             }
+            test++;
         } while (pass);
 
         for (int i = 0; i < 2; i++) {
@@ -105,38 +135,53 @@ public class CardPackage {
 
                 if (card.getValue() > 0) {
                     playerHand.add(card);
-                }
                     deck.remove(0);
-                deck.addAll(deletedCards);
-                Shuflle();
-                deletedCards.clear();
+                }
+                else {
+                    deck.addAll(deletedCards);
+                    Shuflle();
+                    deletedCards.clear();
+                }
             }while (card.getSuit().equals("joker"));
              do {
                 card = deck.get((0));
 
                  if (card.getValue() > 0) {
                      dealerHand.add(card);
-                 }
                      deck.remove(0);
-                    deck.addAll(deletedCards);
-                    Shuflle();
-                    deletedCards.clear();
+                 }
+                 else {
+                     deck.addAll(deletedCards);
+                     Shuflle();
+                     deletedCards.clear();
+                 }
              }while (card.getSuit().equals("joker"));
         }
     }
+
+    /***
+     * This method is used to Shuflle the deck.
+     */
     public static void Shuflle() {
         Collections.shuffle(deck);
     }
 
+    /***
+     * This method is used to get the sum of the cards in the player's hand.
+     * @return sum of the player hand
+     */
     public static int sumPlayerHand() {
         int sum = 0;
         for (int i = 0; i < playerHand.size(); i++) {
             sum += playerHand.get(i).getValue();
-            Log.i("sum", String.valueOf(sum)+"player");
         }
         return sum;
     }
 
+    /***
+     * This method is used to get the sum of the cards in the dealer's hand.
+     * @return sum of the dealer hand
+     */
     public static int sumDealerHand() {
         int sum = 0;
         for (int i = 0; i < dealerHand.size(); i++) {
@@ -147,16 +192,22 @@ public class CardPackage {
     }
 
 
+    /***
+     * This method is used to add a card to the dealer's hand.
+     */
     public static void addCardDealer() {
-            dealerHand.add(deck.get((0)));
-            deck.remove(0);
+        if (deck.get(0).getValue() <= 0) {
+            Shuflle();
+        }
+        dealerHand.add(deck.get((0)));
+        deck.remove(0);
     }
 
+    /***
+     * This method is to check if the player has busted.
+     * @return true if the player has busted, false otherwise
+     */
     public static boolean isBust() {
-        if (sumPlayerHand() > 21) {
-            return true;
-        } else {
-            return false;
-        }
+     return sumPlayerHand()>21;
     }
 }

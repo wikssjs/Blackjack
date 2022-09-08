@@ -29,8 +29,6 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        gameActivity game = new gameActivity();
-
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -40,29 +38,15 @@ public class HomeActivity extends AppCompatActivity {
         });
 
     }
+
+    /***
+     * This method is used to exit the application.
+     */
     public void onBackPressed(){
         Intent a = new Intent(Intent.ACTION_MAIN);
         a.addCategory(Intent.CATEGORY_HOME);
         a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(a);
 
-    }
-    public static String readToString(String targetURL) throws IOException
-    {
-        URL url = new URL(targetURL);
-        BufferedReader bufferedReader = new BufferedReader(
-                new InputStreamReader(url.openStream()));
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        String inputLine;
-        while ((inputLine = bufferedReader.readLine()) != null)
-        {
-            stringBuilder.append(inputLine);
-            stringBuilder.append(System.lineSeparator());
-        }
-
-        bufferedReader.close();
-        return stringBuilder.toString().trim();
     }
 }
