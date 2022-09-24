@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Blackjack</string>
+    <string name="dollar_symbol">$</string>
+    <string name="insufficient_moneyStr">insufficient money</string>
+    <string name="blackjackTextStr">BLACKJACK</string>
+    <string name="bustTextStr">BUST:</string>
+    <string name="stand">STAND</string>
+    <string name="hit">HIT</string>
+    <string name="re_bet">RE BET</string>
+    <string name="bet">BET</string>
+    <string name="total_bet">TOTAL BET :</string>
+    <string name="player">PLAYER</string>
 </resources>

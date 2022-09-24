@@ -9,9 +9,9 @@ public class Card {
 
     /***
      * This is the constructor for the Card class.
-     * @param value
-     * @param suit
-     * @param image
+     * @param value card value
+     * @param suit card suit
+     * @param image card image
      */
     public Card(int value, String suit, int image) {
         this.value = value;
@@ -45,7 +45,7 @@ public class Card {
 
     /***
      * This method is used to set the value of the card.
-     * @param value
+     * @param value card value
      */
     public void setValue(int value) {
         this.value = value;
@@ -53,7 +53,7 @@ public class Card {
 
     /***
      * This method is used to set the suit of the card.
-     * @param suit
+     * @param suit card suit
      */
     public void setSuit(String suit) {
         this.suit = suit;
@@ -61,7 +61,7 @@ public class Card {
 
     /***
      * This method is used to set the image of the card.
-     * @param image
+     * @param image card image
      */
     public void setImage(int image) {
         this.image = image;
