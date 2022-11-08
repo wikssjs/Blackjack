@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +24,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class gameActivity extends AppCompatActivity {
@@ -41,16 +44,20 @@ public class gameActivity extends AppCompatActivity {
     private ImageView dealerCard2;
     private TextView playerCardValue;
     private TextView dealerCardValue;
+    private TextView level;
+    private ProgressBar leverProgress;
+    private int progressCounter;
+    private int maxProgress;
     private int money;
     private int betToInt;
+    private int levelToint;
     private int dealerIndex = 0;
     private int playerIndex = 0;
     private final Handler handler = new Handler();
     private static final String MONEYFILENAME = "money.txt";
     private static final String LEVELFILENAME = "level.txt";
-    public TextView level;
-    Context context;
-
+    private static final String PROGRESSCOUNTER = "progress_counter.txt";
+    private static final String DIFFICULTY = "difficulty.txt";
 
     /***
      * This method is called when the activity is created.
@@ -61,9 +68,9 @@ public class gameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         money = 50000;
-
-
         level = findViewById(R.id.levelId);
+        maxProgress = 1000;
+
         playingLayout = findViewById(R.id.playingButton_layout);
         chipsLayout = findViewById(R.id.chipLayout);
 
@@ -81,7 +88,6 @@ public class gameActivity extends AppCompatActivity {
         dealerCardValue = findViewById(R.id.dealerSumId);
         playerLayout = findViewById(R.id.playerCardLayout);
         dealerLayout = findViewById(R.id.dealerCardLayout);
-        context = this;
 
         betAmount = findViewById(R.id.betAmountId);
         moneyAmount = findViewById(R.id.moneyId);
@@ -90,10 +96,6 @@ public class gameActivity extends AppCompatActivity {
         doubleDown = findViewById(R.id.doubleButtonId);
         replayButton = findViewById(R.id.replayButtonid);
         hit.setOnClickListener(v -> hitCard());
-
-
-        moneyAmount.setText(getString(R.string.dollar_symbol) + money);
-
 
 
         //bet Button
@@ -105,7 +107,10 @@ public class gameActivity extends AppCompatActivity {
                 chipsLayout.setVisibility(View.GONE);
                 betButton.setVisibility(View.GONE);
                 try {
-                    saveMoneyToFile();
+                    saveToFile(MONEYFILENAME, money);
+                    saveToFile(PROGRESSCOUNTER, progressCounter);
+                    saveToFile(DIFFICULTY, maxProgress);
+                    saveToFile(LEVELFILENAME, levelToint);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -117,24 +122,35 @@ public class gameActivity extends AppCompatActivity {
 
         //Rebet Button
         replayButton.setOnClickListener(v -> {
-              if(money>0&&betToInt>0) {
-            try {
-                saveMoneyToFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            restart();
-             level.setText(CardPackage.deck.size());
-              }
-            else{
-              Toast.makeText(gameActivity.this, "You have no money or bet", Toast.LENGTH_SHORT).show();
+            if (money > 0 && betToInt > 0) {
+                try {
+                    saveToFile(MONEYFILENAME, money);
+                    saveToFile(PROGRESSCOUNTER, progressCounter);
+                    saveToFile(DIFFICULTY, maxProgress);
+                    saveToFile(LEVELFILENAME, levelToint);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                restart();
+            } else {
+                Toast.makeText(gameActivity.this, "You have no money or bet", Toast.LENGTH_SHORT).show();
             }
         });
 
         betToInt = Integer.parseInt(betAmount.getText().toString());
 
-        getMoneyFromFile();
+        //get all user data
+        try {
+            money = Integer.parseInt(getFromFile(MONEYFILENAME, moneyAmount));
+            levelToint = Integer.parseInt(getFromFile(LEVELFILENAME, level));
+            progressCounter = Integer.parseInt(getFromFile(PROGRESSCOUNTER, null));
+            maxProgress = Integer.parseInt(getFromFile(DIFFICULTY, null));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+        level.setText(String.valueOf(levelToint));
+        moneyAmount.setText(getString(R.string.dollar_symbol) + money);
 
         //Double down
         doubleDown.setOnClickListener(v -> doubleDown());
@@ -208,7 +224,6 @@ public class gameActivity extends AppCompatActivity {
      * This method is used to distribute the cards to player and dealer
      */
     public void distributeCards() {
-        level.setText(String.valueOf(CardPackage.deck.size()));
         CardPackage.getFourCards();
         doubleDown.setVisibility(View.VISIBLE);
         dealerCard1.setImageResource(CardPackage.dealerHand.get(dealerIndex).getImage());
@@ -242,6 +257,7 @@ public class gameActivity extends AppCompatActivity {
             money += betToInt * 2.5;
             moneyAmount.setText(String.valueOf(money));
             betAmount.setText("0");
+            Progress(betToInt * 2.5);
             betToInt = 0;
             clearCards();
             gameEnd();
@@ -253,6 +269,7 @@ public class gameActivity extends AppCompatActivity {
             dealerCard2.setImageResource(CardPackage.dealerHand.get(dealerIndex - 1).getImage());
             moneyAmount.setText(String.valueOf(money));
             betAmount.setText("0");
+            Progress(betToInt);
             betToInt = 0;
             clearCards();
             gameEnd();
@@ -266,7 +283,6 @@ public class gameActivity extends AppCompatActivity {
      * This method is used to hit the card to the player
      */
     public void hitCard() {
-        level.setText(String.valueOf(CardPackage.deck.size()));
         doubleDown.setVisibility(View.GONE);
         ImageView newCard = new ImageView(this);
         CardPackage.getCard();
@@ -289,6 +305,7 @@ public class gameActivity extends AppCompatActivity {
             dealerCardValue.setText(String.valueOf(CardPackage.sumDealerHand()));
             gameEnd();
             clearCards();
+            Progress(betToInt);
             betToInt = 0;
             betAmount.setText(String.valueOf(betToInt));
 
@@ -374,7 +391,7 @@ public class gameActivity extends AppCompatActivity {
             ImageView newCard = new ImageView(this);
             newCard.setImageResource(CardPackage.dealerHand.get(CardPackage.dealerHand.size() - 1).getImage());
             newCard.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-            newCard.startAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_in));
+            newCard.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
             handler.postDelayed(() -> dealerLayout.addView(newCard), 100);
             dealerCardValue.setText(String.valueOf(CardPackage.sumDealerHand()));
 
@@ -395,19 +412,21 @@ public class gameActivity extends AppCompatActivity {
         if (CardPackage.sumDealerHand() > 21) {
             dealerCardValue.setText(MessageFormat.format("BUST :{0}", CardPackage.sumDealerHand()));
             money += betToInt * 2;
+            Progress(betToInt * 2);
         }
 
         //player bust
         if (CardPackage.sumPlayerHand() > 21) {
             playerCardValue.setText(MessageFormat.format("BUST :{0}", CardPackage.sumPlayerHand()));
             money -= betToInt;
+            Progress(betToInt);
         }
 
         //dealer wins
         if (CardPackage.sumDealerHand() > CardPackage.sumPlayerHand() && CardPackage.sumDealerHand() <= 21) {
             Toast.makeText(this, "DEALER WINS", Toast.LENGTH_SHORT).show();
             dealerCardValue.setText(MessageFormat.format("WINS: {0}", CardPackage.sumDealerHand()));
-
+            Progress(betToInt);
         }
 
 
@@ -417,6 +436,7 @@ public class gameActivity extends AppCompatActivity {
             dealerCardValue.setText(MessageFormat.format("DRAW :{0}", CardPackage.sumDealerHand()));
             playerCardValue.setText(MessageFormat.format("DRAW :{0}", CardPackage.sumPlayerHand()));
             money += betToInt;
+            Progress(betToInt);
         }
 
         //player wins
@@ -424,6 +444,7 @@ public class gameActivity extends AppCompatActivity {
             Toast.makeText(this, "PLAYER WINS", Toast.LENGTH_SHORT).show();
             playerCardValue.setText(MessageFormat.format("WINS : {0}", CardPackage.sumPlayerHand()));
             money += betToInt * 2;
+            Progress(betToInt * 2);
         }
 
         dealerCard2.setImageResource(CardPackage.dealerHand.get(1).getImage());
@@ -458,20 +479,20 @@ public class gameActivity extends AppCompatActivity {
     /**
      * This method is to save the player's money
      */
-    public void saveMoneyToFile() throws IOException {
+    public void saveToFile(String fileName, int value) throws IOException {
         FileOutputStream outputStream;
-        outputStream = openFileOutput(MONEYFILENAME, Context.MODE_PRIVATE);
-        outputStream.write(String.valueOf(money).getBytes());
+        outputStream = openFileOutput(fileName, Context.MODE_PRIVATE);
+        outputStream.write(String.valueOf(value).getBytes());
         outputStream.close();
     }
 
     /**
      * This method is to load the player's money
      */
-    public void getMoneyFromFile() {
+    public String getFromFile(String fileName, TextView tv) {
         FileInputStream inputStream;
         try {
-            inputStream = openFileInput(MONEYFILENAME);
+            inputStream = openFileInput(fileName);
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             StringBuilder stringBuilder = new StringBuilder();
@@ -479,11 +500,12 @@ public class gameActivity extends AppCompatActivity {
             while ((line = bufferedReader.readLine()) != null) {
                 stringBuilder.append(line);
             }
-            money = Integer.parseInt(stringBuilder.toString());
-            moneyAmount.setText(String.valueOf(money));
+            return stringBuilder.toString();
+            //value = Integer.parseInt(stringBuilder.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     boolean doubleBackToExitPressedOnce = false;
@@ -512,13 +534,13 @@ public class gameActivity extends AppCompatActivity {
 
     public boolean playerHasBlackJack() {
         return CardPackage.playerHand.get(0).getValue() == 1 && CardPackage.playerHand.get(1).getValue() == 10 ||
-               CardPackage.playerHand.get(0).getValue() == 10 && CardPackage.playerHand.get(1).getValue() == 1;
+                CardPackage.playerHand.get(0).getValue() == 10 && CardPackage.playerHand.get(1).getValue() == 1;
     }
 
     public boolean dealerHasBlackJack() {
         if (CardPackage.dealerHand.size() > 0) {
             return CardPackage.dealerHand.get(0).getValue() == 1 && CardPackage.dealerHand.get(1).getValue() == 10 ||
-                   CardPackage.dealerHand.get(0).getValue() == 10 && CardPackage.dealerHand.get(1).getValue() == 1;
+                    CardPackage.dealerHand.get(0).getValue() == 10 && CardPackage.dealerHand.get(1).getValue() == 1;
         }
         return false;
     }
@@ -538,8 +560,36 @@ public class gameActivity extends AppCompatActivity {
             }
         }
     }
-    //TODO: Progress bar for the game level
-    //TODO: Add sound effects for the game
-    //TODO: Add animations for the game
-    //TODO: Add music for the game
+
+    //progress for user level
+    public void Progress(double progress) {
+        leverProgress = findViewById(R.id.progressBar);
+
+        progressCounter += progress;
+        leverProgress.setProgress(progressCounter);
+        leverProgress.setMax(maxProgress);
+        if (progressCounter >= maxProgress) {
+            levelToint++;
+            maxProgress += 1000;
+            leverProgress.setProgress(0);
+            progressCounter = 0;
+        }
+
+        Log.i("progress", String.valueOf(progressCounter));
+        Log.i("progress", String.valueOf(maxProgress) + " max");
+        //save all user daa
+        try {
+            saveToFile(LEVELFILENAME, levelToint);
+            saveToFile(PROGRESSCOUNTER, progressCounter);
+            saveToFile(DIFFICULTY, maxProgress);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        level.setText(String.valueOf(levelToint));
+    }
 }
+        //TODO:Fix Progress bar for the game level
+        //TODO: Add sound effects for the game
+        //TODO: Add animations for the game
+        //TODO: Add music for the game

@@ -22,7 +22,7 @@
             android:exported="false"
             android:label="Home" />
         <activity
-            android:name=".MainActivity"
+            android:name=".LoadingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
