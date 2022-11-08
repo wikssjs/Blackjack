@@ -3,8 +3,6 @@
 ![](images/menu.png)
 ![](images/playing.png)
 ![](images/betting.png)
-![](license)
-
 
 
 
