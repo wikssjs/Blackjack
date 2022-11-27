@@ -1,3 +1,13 @@
+## Description 
+* This is a blajack game that i have create with android studio like the real blackjack, 
+you can hit stand and double down with integrate money
+
+
+# project Video
+https://user-images.githubusercontent.com/72478345/204153475-0c96fdf4-d4a7-4324-9704-a9999e98ea0e.mp4
+
+
+
 # Blackjack
 ![](images/loading.png)
 ![](images/menu.png)
@@ -6,9 +16,7 @@
 
 
 
-## Description 
-* This is a blajack game that i have create with android studio like the real blackjack, 
-you can hit stand and double down with integrate money
+
 
 
 ## LICENCE
